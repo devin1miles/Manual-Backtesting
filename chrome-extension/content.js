@@ -1,6 +1,8 @@
 (function () {
   if (document.getElementById('ta-widget')) return;
 
+  const BACKEND = 'http://localhost:3001'; // ← swap to Railway URL when deployed
+
   const widget = document.createElement('div');
   widget.id = 'ta-widget';
   widget.innerHTML = `
@@ -207,7 +209,7 @@ Return ONLY this JSON, no other text:
     const msgEl = document.getElementById('ta-login-msg');
     msgEl.textContent = 'Logging in...';
     try {
-      const res = await fetch('http://localhost:3001/api/auth/login', {
+      const res = await fetch('${BACKEND}/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass }),
@@ -376,7 +378,7 @@ Return ONLY this JSON, no other text:
 
     setMsg('Logging...');
     try {
-      const res = await fetch('http://localhost:3001/api/trades', {
+      const res = await fetch('${BACKEND}/api/trades', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

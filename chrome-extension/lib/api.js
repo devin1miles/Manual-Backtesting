@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3001/api';
+// Change this one line when you deploy to Railway:
+const API_BASE = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'http://localhost:3001') + '/api';
 
 const ApiClient = {
   async _request(method, path, body = null) {
