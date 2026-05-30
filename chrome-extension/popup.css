@@ -1,0 +1,138 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 320px;
+  min-height: 200px;
+  background: #0f0f14;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+.screen { padding: 16px; }
+.hidden { display: none !important; }
+
+/* Login / Register */
+.header { text-align: center; margin-bottom: 16px; }
+.header h1 { font-size: 18px; color: #00d4aa; }
+.header p  { color: #888; font-size: 12px; margin-top: 4px; }
+
+.field { margin-bottom: 10px; }
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px 10px;
+  background: #1a1a24;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+}
+input::placeholder { color: #555; }
+input:focus, select:focus { border-color: #00d4aa; }
+
+button {
+  width: 100%;
+  padding: 9px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+#login-btn, #register-btn, #log-trade-btn {
+  background: #00d4aa;
+  color: #0f0f14;
+}
+#login-btn:hover, #register-btn:hover, #log-trade-btn:hover {
+  background: #00bfa0;
+}
+
+#show-register, #show-login, #logout-btn {
+  background: transparent;
+  color: #888;
+  border: 1px solid #2a2a38;
+}
+#show-register:hover, #show-login:hover, #logout-btn:hover {
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+.error   { color: #ff5c5c; font-size: 12px; margin-top: 6px; }
+.success { color: #00d4aa; font-size: 12px; margin-top: 6px; }
+
+/* Dashboard */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+#user-email-display { font-size: 11px; color: #888; }
+#logout-btn { width: auto; padding: 4px 10px; font-size: 11px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  background: #1a1a24;
+  padding: 4px;
+  border-radius: 8px;
+}
+.tab {
+  flex: 1;
+  padding: 5px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: transparent;
+  color: #888;
+  margin: 0;
+  border: none;
+}
+.tab.active { background: #00d4aa; color: #0f0f14; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.stat-card {
+  background: #1a1a24;
+  border: 1px solid #2a2a38;
+  border-radius: 8px;
+  padding: 10px;
+}
+.stat-label { font-size: 10px; color: #888; margin-bottom: 4px; }
+.stat-value { font-size: 16px; font-weight: 700; color: #e0e0e0; }
+.stat-value.positive { color: #00d4aa; }
+.stat-value.negative { color: #ff5c5c; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.row input, .row select { flex: 1; }
+
+#trade-notes { margin-bottom: 0; }

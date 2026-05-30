@@ -1,0 +1,234 @@
+#ta-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  width: 280px;
+  background: #0f0f14;
+  border: 1px solid #2a2a38;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  color: #e0e0e0;
+}
+
+#ta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #1a1a24;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 1px solid #2a2a38;
+  font-weight: 700;
+  font-size: 12px;
+  color: #00d4aa;
+  cursor: grab;
+  user-select: none;
+}
+
+#ta-minimize {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+}
+#ta-minimize:hover { color: #e0e0e0; }
+
+#ta-body { padding: 10px 12px; }
+
+/* --- Login prompt --- */
+#ta-login-prompt {
+  margin-bottom: 8px;
+  padding: 8px;
+  background: #1a1a24;
+  border-radius: 6px;
+  border: 1px solid #2a2a38;
+}
+.ta-prompt-title {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
+}
+#ta-login-prompt input {
+  width: 100%;
+  padding: 6px 8px;
+  background: #0f0f14;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 12px;
+  outline: none;
+  margin-bottom: 5px;
+  box-sizing: border-box;
+}
+#ta-login-btn {
+  width: 100%;
+  padding: 7px;
+  background: #00d4aa;
+  color: #0a0a0f;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+}
+#ta-login-msg { font-size: 11px; color: #ff5c5c; margin-top: 4px; min-height: 14px; }
+
+/* --- API key prompt --- */
+#ta-key-prompt {
+  margin-bottom: 8px;
+}
+#ta-key-input {
+  width: 100%;
+  padding: 7px 8px;
+  background: #1a1a24;
+  border: 1px solid #00d4aa;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 11px;
+  outline: none;
+  margin-bottom: 5px;
+  box-sizing: border-box;
+}
+#ta-key-save {
+  width: 100%;
+  padding: 7px;
+  background: #00d4aa;
+  color: #0a0a0f;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* --- Drop zone --- */
+#ta-dropzone {
+  border: 2px dashed #2a2a38;
+  border-radius: 8px;
+  padding: 16px 10px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+#ta-dropzone.drag-over {
+  border-color: #00d4aa;
+  background: #00d4aa11;
+}
+#ta-drop-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+}
+#ta-drop-hint {
+  font-size: 11px;
+  color: #555;
+  margin-bottom: 8px;
+}
+#ta-upload-label {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #00d4aa;
+  color: #0a0a0f;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+#ta-upload-label:hover { background: #00e8bb; }
+#ta-file-input { display: none; }
+
+#ta-status {
+  font-size: 11px;
+  color: #00d4aa;
+  margin-bottom: 8px;
+  min-height: 14px;
+}
+
+#ta-preview {
+  background: #1a1a24;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+#ta-actions input,
+#ta-actions select {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #1a1a24;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+#ta-actions input:focus,
+#ta-actions select:focus { border-color: #00d4aa; }
+#ta-actions input::placeholder { color: #555; }
+
+.ta-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 0;
+}
+.ta-row input,
+.ta-row select { flex: 1; }
+
+#ta-rr {
+  font-size: 11px;
+  color: #00d4aa;
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: #0d2a22;
+  border-radius: 4px;
+  border: 1px solid #00d4aa33;
+}
+
+#ta-btns { display: flex; gap: 6px; margin-top: 4px; }
+
+#ta-confirm {
+  flex: 1;
+  padding: 7px;
+  background: #00d4aa;
+  color: #0f0f14;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+}
+#ta-confirm:hover { background: #00bfa0; }
+
+#ta-cancel {
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+}
+#ta-cancel:hover { color: #e0e0e0; }
+
+#ta-msg {
+  margin-top: 6px;
+  font-size: 11px;
+  min-height: 14px;
+}
+
+.hidden { display: none !important; }
