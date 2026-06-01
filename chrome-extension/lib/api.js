@@ -1,5 +1,4 @@
-// Change this one line when you deploy to Railway:
-const API_BASE = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : 'http://localhost:3001') + '/api';
+const API_BASE = 'https://manual-backtesting-production.up.railway.app/api';
 
 const ApiClient = {
   async _request(method, path, body = null) {

@@ -1,7 +1,7 @@
 (function () {
   if (document.getElementById('ta-widget')) return;
 
-  const BACKEND = 'http://localhost:3001'; // ← swap to Railway URL when deployed
+  const BACKEND = 'https://manual-backtesting-production.up.railway.app';
 
   const widget = document.createElement('div');
   widget.id = 'ta-widget';
