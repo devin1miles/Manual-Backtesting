@@ -165,7 +165,7 @@
 
 IF A SETTINGS DIALOG IS VISIBLE (panel with fields like "Entry price", "Profit Level", "Stop Level"):
   Read these fields directly — they are the most accurate source:
-  • Title says "Long position" → side = "long" | "Short position" → side = "short"
+  • FIRST read the dialog title: "Long position" → side = "long" | "Short position" → side = "short". This overrides everything else.
   • "Entry price" field value → entry
   • Under "PROFIT LEVEL" — "Price" field value → take_profit
   • Under "STOP LEVEL"  — "Price" field value → stop_loss
