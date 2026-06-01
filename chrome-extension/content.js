@@ -161,21 +161,34 @@
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-              { type: 'text', text: `Read the colored price label boxes on the RIGHT AXIS of this TradingView chart. There is a Position tool drawn as a colored rectangle.
+              { type: 'text', text: `This TradingView chart has a Position tool drawn on it — a colored rectangle spanning two zones with a horizontal entry line across the middle.
 
-STEP 1 — Read the GRAY or DARK box on the right axis → entry price.
-STEP 2 — Read the GREEN box on the right axis → take_profit price.
-STEP 3 — Determine side purely from numbers: take_profit > entry → "long" | take_profit < entry → "short"
-STEP 4 — Find stop_loss: there may be multiple RED boxes on the right axis. Use STEP 3 to pick the correct one:
-  • side = "long"  → stop_loss MUST be less than entry. Pick the red box below the gray box.
-  • side = "short" → stop_loss MUST be greater than entry. Pick the red box above the gray box.
-  Any red box that violates this rule is the live market ticker — ignore it.
-STEP 5 — Read "Qty: XX" and "Risk/reward ratio: X.XX" from text inside the colored rectangle if visible.
-STEP 6 — Symbol from top-left of chart (e.g. NQ, XAUUSD, ES1!)
-STEP 7 — Outcome: did candles close past TP or SL after the entry?
-  Candles past TP → result="win" exit_price=take_profit
-  Candles past SL → result="loss" exit_price=stop_loss
-  Unclear/open → result=null exit_price=null
+The rectangle has exactly THREE horizontal edges. Trace each edge across to the RIGHT PRICE AXIS and read the price number at that level:
+
+  TOP edge of the rectangle    → the price at the top boundary
+  MIDDLE line (entry line)     → the price at the entry (also shown as a GRAY label on the right axis)
+  BOTTOM edge of the rectangle → the price at the bottom boundary
+
+STEP 1 — Read all three prices: top_price, entry_price, bottom_price.
+
+STEP 2 — Identify the zone colors:
+  Upper zone (between top edge and entry line): is it RED/PINK or GREEN/TEAL?
+  Lower zone (between entry line and bottom edge): is it RED/PINK or GREEN/TEAL?
+
+STEP 3 — Assign values:
+  The GREEN/TEAL zone boundary (away from entry) = take_profit
+  The RED/PINK zone boundary (away from entry)   = stop_loss
+
+STEP 4 — Side:
+  take_profit > entry → "long"
+  take_profit < entry → "short"
+
+STEP 5 — Symbol from top-left of chart (e.g. NQ, ES1!, XAUUSD, MGC1!)
+
+STEP 6 — Outcome: did candles close past TP or SL after the entry line?
+  Past TP → result="win"  exit_price=take_profit
+  Past SL → result="loss" exit_price=stop_loss
+  Unclear  → result=null  exit_price=null
 
 Return ONLY this JSON, no other text:
 {"entry":0,"stop_loss":0,"take_profit":0,"side":"long or short","symbol":null,"risk_reward":null,"quantity":null,"exit_price":null,"result":null}` },
