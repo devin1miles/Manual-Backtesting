@@ -161,34 +161,30 @@
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-              { type: 'text', text: `This TradingView chart has a Position tool drawn on it — a colored rectangle spanning two zones with a horizontal entry line across the middle.
+              { type: 'text', text: `You are reading a TradingView screenshot. A Position tool settings dialog may be open, or the position tool may just be drawn on the chart.
 
-The rectangle has exactly THREE horizontal edges. Trace each edge across to the RIGHT PRICE AXIS and read the price number at that level:
+IF A SETTINGS DIALOG IS VISIBLE (panel with fields like "Entry price", "Profit Level", "Stop Level"):
+  Read these fields directly — they are the most accurate source:
+  • Title says "Long position" → side = "long" | "Short position" → side = "short"
+  • "Entry price" field value → entry
+  • Under "PROFIT LEVEL" — "Price" field value → take_profit
+  • Under "STOP LEVEL"  — "Price" field value → stop_loss
+  • "Lot size" field → quantity
 
-  TOP edge of the rectangle    → the price at the top boundary
-  MIDDLE line (entry line)     → the price at the entry (also shown as a GRAY label on the right axis)
-  BOTTOM edge of the rectangle → the price at the bottom boundary
+IF NO DIALOG IS VISIBLE (position tool drawn on chart only):
+  The position tool is a colored rectangle with THREE horizontal boundaries.
+  Trace each boundary across to the right price axis:
+  • MIDDLE horizontal line (entry line) → entry (also shown as GRAY label on right axis)
+  • GREEN/TEAL zone outer boundary → take_profit
+  • RED/PINK zone outer boundary → stop_loss
+  Side: take_profit > entry → "long" | take_profit < entry → "short"
 
-STEP 1 — Read all three prices: top_price, entry_price, bottom_price.
-
-STEP 2 — Identify the zone colors:
-  Upper zone (between top edge and entry line): is it RED/PINK or GREEN/TEAL?
-  Lower zone (between entry line and bottom edge): is it RED/PINK or GREEN/TEAL?
-
-STEP 3 — Assign values:
-  The GREEN/TEAL zone boundary (away from entry) = take_profit
-  The RED/PINK zone boundary (away from entry)   = stop_loss
-
-STEP 4 — Side:
-  take_profit > entry → "long"
-  take_profit < entry → "short"
-
-STEP 5 — Symbol from top-left of chart (e.g. NQ, ES1!, XAUUSD, MGC1!)
-
-STEP 6 — Outcome: did candles close past TP or SL after the entry line?
-  Past TP → result="win"  exit_price=take_profit
-  Past SL → result="loss" exit_price=stop_loss
-  Unclear  → result=null  exit_price=null
+IN BOTH CASES:
+  • Symbol: read ticker from top-left of chart (e.g. NQ, ES1!, XAUUSD, MGC1!)
+  • Outcome: did candles close past TP or SL after the entry?
+      Past TP → result="win"  exit_price=take_profit
+      Past SL → result="loss" exit_price=stop_loss
+      Unclear  → result=null  exit_price=null
 
 Return ONLY this JSON, no other text:
 {"entry":0,"stop_loss":0,"take_profit":0,"side":"long or short","symbol":null,"risk_reward":null,"quantity":null,"exit_price":null,"result":null}` },
@@ -222,7 +218,7 @@ Return ONLY this JSON, no other text:
     const msgEl = document.getElementById('ta-login-msg');
     msgEl.textContent = 'Logging in...';
     try {
-      const res = await fetch('${BACKEND}/api/auth/login', {
+      const res = await fetch(`${BACKEND}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass }),
@@ -391,7 +387,7 @@ Return ONLY this JSON, no other text:
 
     setMsg('Logging...');
     try {
-      const res = await fetch('${BACKEND}/api/trades', {
+      const res = await fetch(`${BACKEND}/api/trades`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
