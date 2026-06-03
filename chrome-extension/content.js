@@ -11,18 +11,21 @@
       <button id="ta-minimize">−</button>
     </div>
     <div id="ta-body">
-      <div id="ta-login-prompt" class="hidden">
+      <div id="ta-login-prompt">
         <div class="ta-prompt-title">Login to log trades</div>
         <input id="ta-login-email" type="email" placeholder="Email" />
         <input id="ta-login-pass" type="password" placeholder="Password" />
         <button id="ta-login-btn">Login</button>
         <div id="ta-login-msg"></div>
       </div>
+      <div id="ta-logged-in" class="hidden">
+        <div id="ta-user-bar"><span id="ta-user-email"></span><button id="ta-logout-btn">Logout</button></div>
+      </div>
       <div id="ta-key-prompt" class="hidden">
         <input id="ta-key-input" type="password" placeholder="Paste Anthropic API key (sk-ant-...)" />
         <button id="ta-key-save">Save Key</button>
       </div>
-      <div id="ta-dropzone">
+      <div id="ta-dropzone" class="hidden">
         <div id="ta-drop-label">📸 Drop screenshot here</div>
         <div id="ta-drop-hint">or</div>
         <label id="ta-upload-label" for="ta-file-input">Choose file</label>
@@ -212,6 +215,37 @@ Return ONLY this JSON, no other text:
     }
   }
 
+  function showAuthed(email) {
+    document.getElementById('ta-login-prompt').classList.add('hidden');
+    document.getElementById('ta-logged-in').classList.remove('hidden');
+    document.getElementById('ta-user-email').textContent = email || '';
+    document.getElementById('ta-dropzone').classList.remove('hidden');
+    document.getElementById('ta-status').textContent = '';
+  }
+
+  function showUnauthed() {
+    document.getElementById('ta-login-prompt').classList.remove('hidden');
+    document.getElementById('ta-logged-in').classList.add('hidden');
+    document.getElementById('ta-dropzone').classList.add('hidden');
+    document.getElementById('ta-actions').classList.add('hidden');
+    document.getElementById('ta-key-prompt').classList.add('hidden');
+    showPreview('');
+  }
+
+  function initAuth() {
+    const token = localStorage.getItem('ta_jwt_token');
+    const email = localStorage.getItem('ta_user_email');
+    if (token) showAuthed(email);
+    else showUnauthed();
+  }
+
+  document.getElementById('ta-logout-btn').addEventListener('click', () => {
+    localStorage.removeItem('ta_jwt_token');
+    localStorage.removeItem('ta_user_email');
+    resetWidget();
+    showUnauthed();
+  });
+
   document.getElementById('ta-login-btn').addEventListener('click', async () => {
     const email = document.getElementById('ta-login-email').value.trim();
     const pass  = document.getElementById('ta-login-pass').value;
@@ -226,14 +260,16 @@ Return ONLY this JSON, no other text:
       const data = await res.json();
       if (!res.ok) { msgEl.textContent = data.error || 'Login failed'; return; }
       localStorage.setItem('ta_jwt_token', data.token);
-      document.getElementById('ta-login-prompt').classList.add('hidden');
+      localStorage.setItem('ta_user_email', email);
       document.getElementById('ta-login-email').value = '';
       document.getElementById('ta-login-pass').value = '';
-      setStatus('Logged in — ready to log trades', false);
+      showAuthed(email);
     } catch (e) {
       msgEl.textContent = 'Cannot reach backend';
     }
   });
+
+  initAuth();
 
   function showKeyPrompt() {
     document.getElementById('ta-key-prompt').classList.remove('hidden');
