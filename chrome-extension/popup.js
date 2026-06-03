@@ -44,13 +44,12 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
   clearError('register-error');
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
-  const username = document.getElementById('reg-username').value.trim();
 
   try {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
     if (!res.ok) return setError('register-error', data.error || 'Registration failed');
