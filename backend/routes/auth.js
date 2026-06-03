@@ -88,4 +88,73 @@ router.get('/verify', async (req, res) => {
   }
 });
 
+// POST /api/auth/forgot
+router.post('/forgot', async (req, res) => {
+  const db = req.app.locals.db;
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email required' });
+
+  try {
+    const result = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Email not found' });
+
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await db.query(
+      'UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE email = $3',
+      [token, expires, email]
+    );
+
+    // If SMTP is configured, send email; otherwise log token to console
+    if (process.env.SMTP_USER) {
+      const nodemailer = require('nodemailer');
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: 587,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      });
+      const resetUrl = `${process.env.APP_URL || 'http://localhost:3001'}/reset-password?token=${token}`;
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: email,
+        subject: 'Trading Analyzer — Reset your password',
+        text: `Click to reset your password (expires in 1 hour):\n\n${resetUrl}`,
+      });
+    } else {
+      console.log(`[Password Reset] token for ${email}: ${token}`);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Forgot error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/auth/reset
+router.post('/reset', async (req, res) => {
+  const db = req.app.locals.db;
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Token and password required' });
+
+  try {
+    const result = await db.query(
+      'SELECT id FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()',
+      [token]
+    );
+    if (result.rows.length === 0) return res.status(400).json({ error: 'Invalid or expired token' });
+
+    const bcrypt = require('bcryptjs');
+    const hash = await bcrypt.hash(password, 12);
+    await db.query(
+      'UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2',
+      [hash, result.rows[0].id]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Reset error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

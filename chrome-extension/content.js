@@ -17,6 +17,14 @@
         <input id="ta-login-pass" type="password" placeholder="Password" />
         <button id="ta-login-btn">Login</button>
         <div id="ta-login-msg"></div>
+        <div id="ta-forgot-link">Forgot password?</div>
+      </div>
+      <div id="ta-reset-prompt" class="hidden">
+        <div class="ta-prompt-title">Reset Password</div>
+        <input id="ta-reset-email" type="email" placeholder="Your email" />
+        <button id="ta-reset-btn">Send Reset Link</button>
+        <div id="ta-reset-msg"></div>
+        <div id="ta-back-login">← Back to login</div>
       </div>
       <div id="ta-logged-in" class="hidden">
         <div id="ta-user-bar"><span id="ta-user-email"></span><button id="ta-logout-btn">Logout</button></div>
@@ -43,10 +51,16 @@
           <input id="ta-sl"   type="number" placeholder="Stop Loss"    step="0.01" />
           <input id="ta-tp"   type="number" placeholder="Take Profit"  step="0.01" />
         </div>
-        <input id="ta-exit"   type="number" placeholder="Exit Price (if closed)" step="0.01" />
+        <div id="ta-outcome-btns">
+          <button class="ta-outcome-btn" data-outcome="open">Still Open</button>
+          <button class="ta-outcome-btn" data-outcome="win">✓ Won</button>
+          <button class="ta-outcome-btn" data-outcome="loss">✗ Lost</button>
+        </div>
+        <input id="ta-exit" type="number" placeholder="Exit Price (optional override)" step="0.01" />
         <div id="ta-rr" class="hidden"></div>
+        <div id="ta-pnl-preview" class="hidden"></div>
         <div class="ta-row">
-          <input id="ta-pv" type="number" placeholder="$/point (e.g. 20)" step="0.01" min="0.01" />
+          <input id="ta-pv" type="number" placeholder="$/point" step="0.01" min="0.01" />
           <input id="ta-notes" type="text" placeholder="Notes (optional)" />
         </div>
         <div id="ta-btns">
@@ -271,6 +285,46 @@ Return ONLY this JSON, no other text:
 
   initAuth();
 
+  // --- Forgot / Reset password ---
+  document.getElementById('ta-forgot-link').addEventListener('click', () => {
+    document.getElementById('ta-login-prompt').classList.add('hidden');
+    document.getElementById('ta-reset-prompt').classList.remove('hidden');
+  });
+  document.getElementById('ta-back-login').addEventListener('click', () => {
+    document.getElementById('ta-reset-prompt').classList.add('hidden');
+    document.getElementById('ta-login-prompt').classList.remove('hidden');
+  });
+  document.getElementById('ta-reset-btn').addEventListener('click', async () => {
+    const email = document.getElementById('ta-reset-email').value.trim();
+    const msgEl = document.getElementById('ta-reset-msg');
+    if (!email) { msgEl.textContent = 'Enter your email'; return; }
+    msgEl.textContent = 'Sending...';
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/forgot`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      msgEl.textContent = res.ok
+        ? 'Check your email for a reset link'
+        : 'Email not found';
+    } catch { msgEl.textContent = 'Cannot reach backend'; }
+  });
+
+  // --- Won / Lost / Open outcome buttons ---
+  document.querySelectorAll('.ta-outcome-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ta-outcome-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const outcome = btn.dataset.outcome;
+      const tp = parseFloat(document.getElementById('ta-tp').value);
+      const sl = parseFloat(document.getElementById('ta-sl').value);
+      if (outcome === 'win' && tp)  document.getElementById('ta-exit').value = tp;
+      if (outcome === 'loss' && sl) document.getElementById('ta-exit').value = sl;
+      if (outcome === 'open')       document.getElementById('ta-exit').value = '';
+    });
+  });
+
   function showKeyPrompt() {
     document.getElementById('ta-key-prompt').classList.remove('hidden');
     document.getElementById('ta-key-input').focus();
@@ -362,15 +416,34 @@ Return ONLY this JSON, no other text:
     widget.dataset.result  = data.result  || '';
     widget.dataset.rr      = rr || '';
 
+    // Only auto-fill $/point if the symbol is explicitly in our map
     const pv = lookupPointValue(data.symbol);
-    if (pv) document.getElementById('ta-pv').value = pv;
+    const pvEl = document.getElementById('ta-pv');
+    if (pv) pvEl.value = pv;
+    else pvEl.value = '';
 
+    updatePnlPreview();
     document.getElementById('ta-actions').classList.remove('hidden');
+    // Reset outcome buttons
+    document.querySelectorAll('.ta-outcome-btn').forEach(b => b.classList.remove('active'));
 
-    if (data.result) {
-      setStatus(data.result === 'win' ? 'Trade WON — confirm to log' : 'Trade LOST — confirm to log');
+    setStatus(data.entry ? 'Parsed — select outcome then log' : 'Fill in missing fields');
+  }
+
+  function updatePnlPreview() {
+    const e   = parseFloat(document.getElementById('ta-entry').value);
+    const sl  = parseFloat(document.getElementById('ta-sl').value);
+    const tp  = parseFloat(document.getElementById('ta-tp').value);
+    const qty = parseFloat(document.getElementById('ta-qty').value) || 1;
+    const pv  = parseFloat(document.getElementById('ta-pv').value);
+    const el  = document.getElementById('ta-pnl-preview');
+    if (e && sl && tp && pv) {
+      const risk   = Math.abs(e - sl)  * qty * pv;
+      const reward = Math.abs(tp - e)  * qty * pv;
+      el.textContent = `Risk $${risk.toFixed(0)}  →  Reward $${reward.toFixed(0)}`;
+      el.classList.remove('hidden');
     } else {
-      setStatus(data.entry ? 'AI detected — confirm to log' : 'Fill in missing fields');
+      el.classList.add('hidden');
     }
   }
 
@@ -468,16 +541,18 @@ Return ONLY this JSON, no other text:
     }
   }
 
-  ['ta-entry', 'ta-sl', 'ta-tp'].forEach(id =>
-    document.getElementById(id).addEventListener('input', recalcRR)
-  );
-  document.getElementById('ta-side').addEventListener('change', recalcRR);
+  ['ta-entry', 'ta-sl', 'ta-tp', 'ta-pv', 'ta-qty'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => { recalcRR(); updatePnlPreview(); });
+  });
+  document.getElementById('ta-side').addEventListener('change', () => { recalcRR(); updatePnlPreview(); });
 
   function resetWidget() {
     document.getElementById('ta-actions').classList.add('hidden');
     document.getElementById('ta-rr').classList.add('hidden');
+    document.getElementById('ta-pnl-preview').classList.add('hidden');
     document.getElementById('ta-msg').textContent = '';
     document.getElementById('ta-status').textContent = '';
+    document.querySelectorAll('.ta-outcome-btn').forEach(b => b.classList.remove('active'));
     showPreview('');
     ['ta-entry','ta-sl','ta-tp','ta-exit','ta-pv','ta-notes'].forEach(id => {
       document.getElementById(id).value = '';
