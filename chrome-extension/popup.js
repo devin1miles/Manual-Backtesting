@@ -33,7 +33,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     if (!res.ok) return setError('login-error', data.error || 'Login failed');
     await StorageHelper.set({ token: data.token, user: data.user });
     loadDashboard(data.user);
-    loadApiKeyStatus();
   } catch {
     setError('login-error', 'Could not connect to server. Is the backend running?');
   }
@@ -55,7 +54,6 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     if (!res.ok) return setError('register-error', data.error || 'Registration failed');
     await StorageHelper.set({ token: data.token, user: data.user });
     loadDashboard(data.user);
-    loadApiKeyStatus();
   } catch {
     setError('register-error', 'Could not connect to server. Is the backend running?');
   }
@@ -145,31 +143,6 @@ document.getElementById('trade-form').addEventListener('submit', async (e) => {
   }
 });
 
-// --- API Key ---
-document.getElementById('save-key-btn').addEventListener('click', async () => {
-  const key = document.getElementById('anthropic-key-input').value.trim();
-  const msg = document.getElementById('key-msg');
-  if (!key.startsWith('sk-ant-')) {
-    msg.textContent = 'Invalid — must start with sk-ant-';
-    msg.style.color = '#ff5c5c';
-    msg.classList.remove('hidden');
-    return;
-  }
-  await StorageHelper.set({ anthropicKey: key });
-  document.getElementById('anthropic-key-input').value = '';
-  document.getElementById('anthropic-key-input').placeholder = 'Key saved ✓ (paste new key to update)';
-  msg.textContent = 'Saved!';
-  msg.style.color = '#00d4aa';
-  msg.classList.remove('hidden');
-});
-
-async function loadApiKeyStatus() {
-  const { anthropicKey } = await StorageHelper.get(['anthropicKey']);
-  if (anthropicKey) {
-    document.getElementById('anthropic-key-input').placeholder = 'Key saved ✓ (paste new key to update)';
-  }
-}
-
 // --- Init ---
 async function init() {
   const { token, user } = await StorageHelper.get(['token', 'user']);
@@ -182,7 +155,6 @@ async function init() {
     if (res.ok) {
       const data = await res.json();
       loadDashboard(data.user);
-      loadApiKeyStatus();
     } else {
       await StorageHelper.remove(['token', 'user']);
       showScreen('login-screen');

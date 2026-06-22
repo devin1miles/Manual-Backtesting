@@ -5,9 +5,17 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   username VARCHAR(100),
+  onboarding_completed BOOLEAN DEFAULT FALSE,
+  onboarding_data JSONB,
+  reset_token VARCHAR(255),
+  reset_token_expires TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Migration: run once against existing databases
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_data JSONB;
 
 CREATE TABLE IF NOT EXISTS trades (
   id SERIAL PRIMARY KEY,
@@ -25,9 +33,19 @@ CREATE TABLE IF NOT EXISTS trades (
   notes TEXT,
   tags VARCHAR(255),
   strategy VARCHAR(100),
+  stop_loss DECIMAL(12, 4),
+  take_profit DECIMAL(12, 4),
+  risk_reward DECIMAL(8, 4),
+  point_value DECIMAL(12, 4) DEFAULT 1,
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Migration: run once against existing databases
+-- ALTER TABLE trades ADD COLUMN IF NOT EXISTS stop_loss DECIMAL(12, 4);
+-- ALTER TABLE trades ADD COLUMN IF NOT EXISTS take_profit DECIMAL(12, 4);
+-- ALTER TABLE trades ADD COLUMN IF NOT EXISTS risk_reward DECIMAL(8, 4);
+-- ALTER TABLE trades ADD COLUMN IF NOT EXISTS point_value DECIMAL(12, 4) DEFAULT 1;
 
 CREATE TABLE IF NOT EXISTS daily_stats (
   id SERIAL PRIMARY KEY,

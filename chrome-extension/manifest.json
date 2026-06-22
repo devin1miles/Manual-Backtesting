@@ -10,8 +10,8 @@
     "tabs"
   ],
   "host_permissions": [
-    "<all_urls>",
-    "https://api.anthropic.com/*"
+    "https://www.tradingview.com/*",
+    "https://manual-backtesting-production.up.railway.app/*"
   ],
   "action": {
     "default_popup": "popup.html",

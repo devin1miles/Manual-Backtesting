@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
@@ -23,14 +24,14 @@ router.post('/register', async (req, res) => {
 
     const password_hash = await bcrypt.hash(password, 12);
     const result = await db.query(
-      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username, created_at',
+      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id, email, username, onboarding_completed, created_at',
       [email, password_hash, username || null]
     );
 
     const user = result.rows[0];
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
-    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username } });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, onboarding_completed: user.onboarding_completed } });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -60,7 +61,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, onboarding_completed: user.onboarding_completed } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
@@ -78,13 +79,37 @@ router.get('/verify', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const db = req.app.locals.db;
-    const result = await db.query('SELECT id, email, username FROM users WHERE id = $1', [decoded.userId]);
+    const result = await db.query('SELECT id, email, username, onboarding_completed FROM users WHERE id = $1', [decoded.userId]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'User not found' });
     }
     res.json({ valid: true, user: result.rows[0] });
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// POST /api/auth/onboarding
+router.post('/onboarding', authenticateToken, async (req, res) => {
+  const db = req.app.locals.db;
+  const userId = req.user.userId;
+  const { trader_type, setups, instruments } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE users
+       SET onboarding_completed = TRUE,
+           onboarding_data = $1,
+           updated_at = NOW()
+       WHERE id = $2
+       RETURNING id, email, username, onboarding_completed`,
+      [JSON.stringify({ trader_type, setups, instruments }), userId]
+    );
+    const user = result.rows[0];
+    res.json({ user });
+  } catch (err) {
+    console.error('Onboarding error:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -105,21 +130,18 @@ router.post('/forgot', async (req, res) => {
       [token, expires, email]
     );
 
-    // If SMTP is configured, send email; otherwise log token to console
-    if (process.env.SMTP_USER) {
-      const nodemailer = require('nodemailer');
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: 587,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-      });
+    // If Resend is configured, send email; otherwise log token to console
+    if (process.env.RESEND_API_KEY) {
+      const { Resend } = require('resend');
+      const resend = new Resend(process.env.RESEND_API_KEY);
       const resetUrl = `${process.env.APP_URL || 'http://localhost:3001'}/reset-password?token=${token}`;
-      await transporter.sendMail({
-        from: process.env.SMTP_USER,
+      const { error } = await resend.emails.send({
+        from: process.env.RESEND_FROM || 'Trading Analyzer <onboarding@resend.dev>',
         to: email,
         subject: 'Trading Analyzer — Reset your password',
         text: `Click to reset your password (expires in 1 hour):\n\n${resetUrl}`,
       });
+      if (error) console.error('Resend error:', error);
     } else {
       console.log(`[Password Reset] token for ${email}: ${token}`);
     }

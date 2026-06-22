@@ -152,33 +152,6 @@
 }
 #ta-login-msg { font-size: 11px; color: #ff5c5c; margin-top: 4px; min-height: 14px; }
 
-/* --- API key prompt --- */
-#ta-key-prompt {
-  margin-bottom: 8px;
-}
-#ta-key-input {
-  width: 100%;
-  padding: 7px 8px;
-  background: #1a1a24;
-  border: 1px solid #00d4aa;
-  border-radius: 6px;
-  color: #e0e0e0;
-  font-size: 11px;
-  outline: none;
-  margin-bottom: 5px;
-  box-sizing: border-box;
-}
-#ta-key-save {
-  width: 100%;
-  padding: 7px;
-  background: #00d4aa;
-  color: #0a0a0f;
-  border: none;
-  border-radius: 6px;
-  font-weight: 700;
-  cursor: pointer;
-  font-size: 12px;
-}
 
 /* --- Drop zone --- */
 #ta-dropzone {
@@ -235,6 +208,20 @@
   margin-bottom: 8px;
   word-break: break-word;
 }
+
+#ta-strategy {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #1a1a24;
+  border: 1px solid #2a2a38;
+  border-radius: 6px;
+  color: #e0e0e0;
+  font-size: 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+#ta-strategy:focus { border-color: #00d4aa; }
 
 #ta-actions input,
 #ta-actions select {

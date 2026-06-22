@@ -126,7 +126,7 @@ router.put('/:id', async (req, res) => {
     if (exit_price && exit_time) {
       status = 'closed';
       const multiplier = trade.side === 'long' ? 1 : -1;
-      pnl = ((exit_price - trade.entry_price) * trade.quantity * multiplier).toFixed(2);
+      pnl = ((exit_price - trade.entry_price) * trade.quantity * trade.point_value * multiplier).toFixed(2);
       pnl_percent = (((exit_price - trade.entry_price) / trade.entry_price) * 100 * multiplier).toFixed(4);
     }
 

@@ -29,10 +29,6 @@
       <div id="ta-logged-in" class="hidden">
         <div id="ta-user-bar"><span id="ta-user-email"></span><button id="ta-logout-btn">Logout</button></div>
       </div>
-      <div id="ta-key-prompt" class="hidden">
-        <input id="ta-key-input" type="password" placeholder="Paste Anthropic API key (sk-ant-...)" />
-        <button id="ta-key-save">Save Key</button>
-      </div>
       <div id="ta-dropzone" class="hidden">
         <div id="ta-drop-label">📸 Drop screenshot here</div>
         <div id="ta-drop-hint">or</div>
@@ -59,6 +55,19 @@
         <input id="ta-exit" type="number" placeholder="Exit Price (optional override)" step="0.01" />
         <div id="ta-rr" class="hidden"></div>
         <div id="ta-pnl-preview" class="hidden"></div>
+        <select id="ta-strategy">
+          <option value="">Strategy (optional)</option>
+          <option value="Order Block">Order Block</option>
+          <option value="Fair Value Gap (FVG)">Fair Value Gap (FVG)</option>
+          <option value="Breaker Block">Breaker Block</option>
+          <option value="Liquidity Sweep">Liquidity Sweep</option>
+          <option value="Break of Structure (BOS)">Break of Structure (BOS)</option>
+          <option value="Change of Character (CHoCH)">Change of Character (CHoCH)</option>
+          <option value="Supply &amp; Demand">Supply &amp; Demand</option>
+          <option value="Fibonacci Retracement">Fibonacci Retracement</option>
+          <option value="Pin Bar">Pin Bar</option>
+          <option value="Inside Bar">Inside Bar</option>
+        </select>
         <div class="ta-row">
           <input id="ta-pv" type="number" placeholder="$/point" step="0.01" min="0.01" />
           <input id="ta-notes" type="text" placeholder="Notes (optional)" />
@@ -140,13 +149,11 @@
     e.target.value = '';
   });
 
-  // --- Core: read file, call Anthropic directly from content script ---
+  // --- Core: read file, send to backend for AI parsing ---
   async function parseImageFile(file) {
-    // Use localStorage — always accessible from content scripts, no extension context needed
-    const key = localStorage.getItem('ta_anthropic_key');
-    if (!key) {
-      setStatus('No API key — enter it below', true);
-      showKeyPrompt();
+    const token = localStorage.getItem('ta_jwt_token');
+    if (!token) {
+      setStatus('Login required', true);
       return;
     }
 
@@ -155,71 +162,37 @@
     setDropEnabled(false);
 
     const base64 = await fileToBase64(file);
-    const mimeType = file.type || 'image/jpeg';
+    const mimeType = detectMimeType(base64);
 
-    setStatus('Calling AI...', false);
+    setStatus('Analyzing chart...', false);
     showPreview('Analyzing price labels...');
-    setDropEnabled(false);
 
-    // Step 3: call Anthropic directly
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch(`${BACKEND}/api/capture`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 128,
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
-              { type: 'text', text: `You are reading a TradingView screenshot. A Position tool settings dialog may be open, or the position tool may just be drawn on the chart.
-
-IF A SETTINGS DIALOG IS VISIBLE (panel with fields like "Entry price", "Profit Level", "Stop Level"):
-  Read these fields directly — they are the most accurate source:
-  • FIRST read the dialog title: "Long position" → side = "long" | "Short position" → side = "short". This overrides everything else.
-  • "Entry price" field value → entry
-  • Under "PROFIT LEVEL" — "Price" field value → take_profit
-  • Under "STOP LEVEL"  — "Price" field value → stop_loss
-  • "Lot size" field → quantity
-
-IF NO DIALOG IS VISIBLE (position tool drawn on chart only):
-  The position tool is a colored rectangle with THREE horizontal boundaries.
-  Trace each boundary across to the right price axis:
-  • MIDDLE horizontal line (entry line) → entry (also shown as GRAY label on right axis)
-  • GREEN/TEAL zone outer boundary → take_profit
-  • RED/PINK zone outer boundary → stop_loss
-  Side: take_profit > entry → "long" | take_profit < entry → "short"
-
-IN BOTH CASES:
-  • Symbol: read ticker from top-left of chart (e.g. NQ, ES1!, XAUUSD, MGC1!)
-  • Outcome: did candles close past TP or SL after the entry?
-      Past TP → result="win"  exit_price=take_profit
-      Past SL → result="loss" exit_price=stop_loss
-      Unclear  → result=null  exit_price=null
-
-Return ONLY this JSON, no other text:
-{"entry":0,"stop_loss":0,"take_profit":0,"side":"long or short","symbol":null,"risk_reward":null,"quantity":null,"exit_price":null,"result":null}` },
-            ],
-          }],
-        }),
+        body: JSON.stringify({ image: base64, mimeType }),
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('ta_jwt_token');
+        localStorage.removeItem('ta_user_email');
+        resetWidget();
+        showUnauthed();
+        setStatus('Session expired — please log in again', true);
+        return;
+      }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${res.status}`);
+        throw new Error(err.error || `Server error ${res.status}`);
       }
 
       const data = await res.json();
-      const text = data.content[0].text.trim();
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('Unexpected response: ' + text.slice(0, 80));
-      fillForm(JSON.parse(match[0]));
+      fillForm(data);
 
     } catch (err) {
       showPreview(err.message);
@@ -242,7 +215,6 @@ Return ONLY this JSON, no other text:
     document.getElementById('ta-logged-in').classList.add('hidden');
     document.getElementById('ta-dropzone').classList.add('hidden');
     document.getElementById('ta-actions').classList.add('hidden');
-    document.getElementById('ta-key-prompt').classList.add('hidden');
     showPreview('');
   }
 
@@ -325,23 +297,6 @@ Return ONLY this JSON, no other text:
     });
   });
 
-  function showKeyPrompt() {
-    document.getElementById('ta-key-prompt').classList.remove('hidden');
-    document.getElementById('ta-key-input').focus();
-  }
-
-  document.getElementById('ta-key-save').addEventListener('click', () => {
-    const val = document.getElementById('ta-key-input').value.trim();
-    if (!val.startsWith('sk-ant-')) {
-      setStatus('Invalid key — must start with sk-ant-', true);
-      return;
-    }
-    localStorage.setItem('ta_anthropic_key', val);
-    document.getElementById('ta-key-input').value = '';
-    document.getElementById('ta-key-prompt').classList.add('hidden');
-    setStatus('Key saved — now drop a screenshot', false);
-  });
-
   function localISO() {
     const d = new Date();
     const p = n => String(n).padStart(2, '0');
@@ -355,6 +310,13 @@ Return ONLY this JSON, no other text:
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  function detectMimeType(base64) {
+    if (base64.startsWith('/9j/')) return 'image/jpeg';
+    if (base64.startsWith('iVBORw0KGgo')) return 'image/png';
+    if (base64.startsWith('UklGR')) return 'image/webp';
+    return 'image/png';
   }
 
   function setDropEnabled(enabled) {
@@ -473,6 +435,7 @@ Return ONLY this JSON, no other text:
     const exit  = parseFloat(document.getElementById('ta-exit').value) || null;
     const pv    = parseFloat(document.getElementById('ta-pv').value) || lookupPointValue(symbol) || 1;
     const notes = document.getElementById('ta-notes').value.trim();
+    const strategy = document.getElementById('ta-strategy').value || null;
     const side_mult = side === 'short' ? -1 : 1;
     const risk_reward = sl && tp && entry
       ? Math.abs((side === 'short' ? (entry - tp) : (tp - entry)) / Math.abs(entry - sl)).toFixed(2)
@@ -483,7 +446,7 @@ Return ONLY this JSON, no other text:
     const trade = {
       symbol, side, entry_price: entry, quantity: qty,
       entry_time: localISO(),
-      stop_loss: sl, take_profit: tp, risk_reward, notes,
+      stop_loss: sl, take_profit: tp, risk_reward, notes, strategy,
       point_value: pv,
       ...(exit ? { exit_price: exit, exit_time: localISO() } : {}),
     };
@@ -557,6 +520,7 @@ Return ONLY this JSON, no other text:
     ['ta-entry','ta-sl','ta-tp','ta-exit','ta-pv','ta-notes'].forEach(id => {
       document.getElementById(id).value = '';
     });
+    document.getElementById('ta-strategy').value = '';
     document.getElementById('ta-qty').value = '1';
   }
 })();

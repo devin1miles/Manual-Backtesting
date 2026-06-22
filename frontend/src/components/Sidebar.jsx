@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 
 const links = [
-  { to: '/', label: 'Dashboard' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/journal', label: 'Trade Journal' },
   { to: '/analytics', label: 'Analytics' },
 ];
@@ -21,7 +21,7 @@ export default function Sidebar() {
       <div style={styles.logo}>Trading Analyzer</div>
       <nav style={styles.nav}>
         {links.map(({ to, label }) => (
-          <NavLink key={to} to={to} end={to === '/'} style={({ isActive }) => ({
+          <NavLink key={to} to={to} end={to === '/dashboard'} style={({ isActive }) => ({
             ...styles.link,
             background: isActive ? 'var(--surface)' : 'transparent',
             color: isActive ? 'var(--accent)' : 'var(--muted)',

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -33,6 +34,12 @@ app.use('/api/capture', captureRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(frontendDist));
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 app.listen(PORT, () => {
