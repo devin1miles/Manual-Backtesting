@@ -1,8 +1,8 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "npm install --omit=dev && npm --prefix ../frontend install && npm --prefix ../frontend run build"
+buildCommand = "npm --prefix backend install --omit=dev && npm --prefix frontend install && npm --prefix frontend run build"
 
 [deploy]
-startCommand = "node server.js"
+startCommand = "node backend/server.js"
 healthcheckPath = "/api/health"
 restartPolicyType = "on_failure"
