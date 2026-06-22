@@ -1,6 +1,6 @@
 [build]
 builder = "RAILPACK"
-buildCommand = "npm --prefix backend install --omit=dev && npm --prefix frontend install && npm --prefix frontend run build"
+buildCommand = "mkdir -p node_modules && npm --prefix backend install --omit=dev && npm --prefix frontend install && npm --prefix frontend run build"
 
 [deploy]
 startCommand = "node backend/server.js"
