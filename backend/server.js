@@ -36,6 +36,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+const fs = require('fs');
+app.get('/api/debug-fs', (req, res) => {
+  const tryList = (p) => { try { return fs.readdirSync(p); } catch (e) { return `ERROR: ${e.message}`; } };
+  res.json({
+    __dirname,
+    cwd: process.cwd(),
+    dirnameListing: tryList(__dirname),
+    parentListing: tryList(path.join(__dirname, '..')),
+    frontendDistListing: tryList(path.join(__dirname, '..', 'frontend', 'dist')),
+  });
+});
+
 const frontendDist = path.join(__dirname, '..', 'frontend', 'dist');
 app.use(express.static(frontendDist));
 app.get(/^\/(?!api).*/, (req, res) => {
